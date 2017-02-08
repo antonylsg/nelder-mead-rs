@@ -1,9 +1,9 @@
-#![allow(dead_code)]
 extern crate ndarray;
 
 use self::ndarray::Array1;
 
 
+/// Output data
 #[derive(Debug)]
 pub struct Output {
     pub f_min: f64,
@@ -12,49 +12,53 @@ pub struct Output {
 }
 
 
+/// A structure that holds all the minimization parameters
 #[derive(Debug)]
 pub struct Minimizer {
+    /// Reflection parameter
     a: f64,
+    
+    /// Contraction parameter
     b: f64,
+
+    /// Expansion parameter
     c: f64,
+
+    /// Shrinkage parameter
     d: f64,
+
+    /// Initialization parameter
     h: f64,
+
+    /// Tolerance parameter
     tol: f64,
+
+    /// Iterations parameter
     max: usize,
 }
 
 impl Default for Minimizer {
     fn default() -> Minimizer {
         Minimizer {
-            // Reflection parameter
             a: 1.0,
-
-            // Contraction parameter
             b: 0.5,
-
-            // Expansion parameter
             c: 2.0,
-
-            // Shrinkage parameter
             d: 0.5,
-
-            // Initialization parameter
             h: 0.05,
-
-            // Tolerance parameter
             tol: 1e-4,
-
-            // Iterations parameter
             max: 200,
         }
     }
 }
 
 impl Minimizer {
+    /// Getter for the tol parameter
     pub fn tol(&self) -> f64 {
         self.tol
     }
 
+
+    /// Minimize the function `func` with the seed `x0`
     pub fn minimize<F>(&self, func: F, x0: Vec<f64>) -> Result<Output, ()>
         where F: Fn(Vec<f64>) -> f64 {
 
