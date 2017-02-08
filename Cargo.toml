@@ -1,0 +1,7 @@
+[package]
+name = "nelder_mead"
+version = "0.1.0"
+authors = ["Antony Lesage <lesage.antony@gmail.com>"]
+
+[dependencies]
+ndarray = "*"
