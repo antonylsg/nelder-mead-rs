@@ -27,7 +27,7 @@ pub struct Minimizer {
     /// Shrinkage parameter
     d: f64,
 
-    /// Initialization parameter
+    /// Initialization parameters
     step: f64,
     step_zero: f64,
 
@@ -59,17 +59,17 @@ impl Default for Minimizer {
 
 impl Minimizer {
     /// Minimize the function `func` with the seed `x0`
-    pub fn minimize<F>(&self, func: F, x0: Vec<f64>) -> Result<Output, ()>
-        where F: Fn(Vec<f64>) -> f64 {
+    pub fn minimize<F>(&self, func: F, x0: &[f64]) -> Result<Output, ()>
+        where F: Fn(&[f64]) -> f64 {
 
-        use std::cmp::Ordering;
+        use std::cmp::Ordering::Equal;
 
 
         // Init
-        let x0 = Array1::from_vec(x0);
+        let x0 = Array1::from_vec(x0.to_vec());
         let inv_dim = (x0.dim() as f64).recip();
         let mut pairs = Vec::new();
-        let pair = (func(x0.to_vec()), x0.clone());
+        let pair = (func(&x0.to_vec()), x0.clone());
         pairs.push(pair);
         
         for (idx, _) in x0.iter().enumerate() {
@@ -85,14 +85,13 @@ impl Minimizer {
                 };
             }
 
-            let pair = (func(x.to_vec()), x.clone());
+            let pair = (func(&x.to_vec()), x.clone());
             pairs.push(pair);
         }
 
 
         // Sort
-        pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-            .unwrap_or(Ordering::Equal));
+        pairs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Equal));
 
 
         for iter in 0 .. x0.dim() * self.max_iter {
@@ -104,11 +103,17 @@ impl Minimizer {
                 .map(|p| &p.1)
                 .fold(Array1::zeros(x0.dim()), |acc, x| acc + x) * inv_dim;
 
+            // Best
+            let (fb, xb) = pairs.first().cloned().unwrap();
+
+            // Worst
             let (mut fw, mut xw) = pairs.last().cloned().unwrap();
 
             // Reflection
-            let xr = (1.0 + self.a) * &centroid - self.a * xw.clone();
-            let fr = func(xr.to_vec());
+            let xr = (1.0 + self.a) * &centroid - self.a * &xw;
+            let fr = func(&xr.to_vec());
+
+            // Second-worst
             let fs = pairs.iter().rev().skip(1).rev().last().unwrap().0;
 
             // Reflection accepted
@@ -117,10 +122,9 @@ impl Minimizer {
                 fw = fr;
 
                 // Expansion
-                let fb = pairs.first().unwrap().0;
                 if fr < fb {
                     let xe = (1.0 - self.c) * &centroid + self.c * xr;
-                    let fe = func(xe.to_vec());
+                    let fe = func(&xe.to_vec());
 
                     // Expansion accepted
                     if fe < fb {
@@ -139,7 +143,7 @@ impl Minimizer {
                     // Inside contraction
                     (1.0 - self.b) * &centroid + self.b * &xw
                 };
-                let fc = func(xc.to_vec());
+                let fc = func(&xc.to_vec());
 
                 // Contraction accepted
                 let min = if fr < fw { fr } else { fw };
@@ -149,7 +153,6 @@ impl Minimizer {
                 }
                 else {
                     // Shrinkage
-                    let xb = pairs.first().unwrap().1.clone();
                     for &mut (_, ref mut x) in pairs.iter_mut().skip(1) {
                         *x *= self.d;
                         x.scaled_add(1.0 - self.d, &xb);
@@ -162,8 +165,7 @@ impl Minimizer {
             pairs.push((fw, xw));
 
             // Sort
-            pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-                .unwrap_or(Ordering::Equal));
+            pairs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Equal));
 
 
             // Termination tests
@@ -171,12 +173,10 @@ impl Minimizer {
             let &(fw, ref xw) = pairs.last().unwrap();
 
             // Domain convergence test
-            let mut sorted = (xw - xb)
-                .into_iter()
-                .map(|xi| xi.abs())
-                .collect::<Vec<f64>>();
-            sorted.sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Ordering::Equal));
-            let test_x = sorted.last().unwrap().clone();
+            let buf = (xw - xb).to_vec();
+            let mut buf: Vec<_> = buf.into_iter().map(|xi| xi.abs()).collect();
+            buf.sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Equal));
+            let test_x = buf.last().unwrap().clone();
 
             // Function value convergence test
             let test_f = (fw - fb).abs();
