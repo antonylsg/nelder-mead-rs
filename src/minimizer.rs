@@ -28,13 +28,17 @@ pub struct Minimizer {
     d: f64,
 
     /// Initialization parameter
-    h: f64,
+    step: f64,
+    step_zero: f64,
 
-    /// Tolerance parameter
-    tol: f64,
+    /// Tolerance (function) parameter
+    tol_f: f64,
+
+    /// Tolerance (point) parameter
+    tol_x: f64,
 
     /// Iterations parameter
-    max: usize,
+    max_iter: usize,
 }
 
 impl Default for Minimizer {
@@ -44,20 +48,16 @@ impl Default for Minimizer {
             b: 0.5,
             c: 2.0,
             d: 0.5,
-            h: 0.05,
-            tol: 1e-4,
-            max: 200,
+            step: 0.01,
+            step_zero: 0.00025,
+            tol_f: 1e-4,
+            tol_x: 1e-4,
+            max_iter: 200,
         }
     }
 }
 
 impl Minimizer {
-    /// Getter for the tol parameter
-    pub fn tol(&self) -> f64 {
-        self.tol
-    }
-
-
     /// Minimize the function `func` with the seed `x0`
     pub fn minimize<F>(&self, func: F, x0: Vec<f64>) -> Result<Output, ()>
         where F: Fn(Vec<f64>) -> f64 {
@@ -76,13 +76,12 @@ impl Minimizer {
             let mut x = x0.clone();
 
             unsafe {
-                // *x.uget_mut(idx) += self.h;
                 let xi = x.uget_mut(idx);
                 *xi = if *xi == 0.0 {
-                    self.h
+                    self.step_zero
                 }
                 else {
-                    *xi * self.h
+                    *xi * (1.0 + self.step)
                 };
             }
 
@@ -91,130 +90,101 @@ impl Minimizer {
         }
 
 
-        // Sort
-        pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-            .unwrap_or(Ordering::Equal));
+        for iter in 0 .. x0.dim() * self.max_iter {
+            // Sort
+            pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
+                .unwrap_or(Ordering::Equal));
+                    
+            // Centroid
+            let centroid = pairs
+                .iter()
+                .rev()
+                .skip(1)
+                .map(|p| &p.1)
+                .fold(Array1::zeros(x0.dim()), |acc, x| acc + x) * inv_dim;
 
 
-        // Centroid
-        let mut centroid = pairs
-            .iter()
-            .rev()
-            .skip(1)
-            .map(|p| &p.1)
-            .fold(Array1::zeros(x0.dim()), |acc, x| acc + x) * inv_dim;
-
-
-        for iter in 0 .. self.max * x0.dim() {
-            let (mut fh, mut xh) = pairs.last().cloned().unwrap();
-
-            // Save old xh
-            let old_xh = xh.clone();
+            let (mut fw, mut xw) = pairs.last().cloned().unwrap();
 
             // Reflection
-            let xr = (1.0 + self.a) * &centroid - self.a * xh.clone();
+            let xr = (1.0 + self.a) * &centroid - self.a * xw.clone();
             let fr = func(xr.to_vec());
             let fs = pairs.iter().rev().skip(1).rev().last().unwrap().0;
 
             // Reflection accepted
             if fr < fs {
-                xh = xr.clone();
-                fh = fr;
+                xw = xr.clone();
+                fw = fr;
 
                 // Expansion
-                let fl = pairs.first().unwrap().0;
-                if fr < fl {
+                let fb = pairs.first().unwrap().0;
+                if fr < fb {
                     let xe = (1.0 - self.c) * &centroid + self.c * xr;
                     let fe = func(xe.to_vec());
 
                     // Expansion accepted
-                    if fe < fl {
-                        xh = xe;
-                        fh = fe;
+                    if fe < fb {
+                        xw = xe;
+                        fw = fe;
                     }
                 }
-
-                // Pull update
-                pairs.pop();
-                pairs.push((fh, xh));
-
-                // Sort
-                pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-                    .unwrap_or(Ordering::Equal));
-
-                // Update centroid
-                let new_xh = &pairs.last().unwrap().1;
-                let dxh = old_xh - new_xh;
-                centroid.scaled_add(inv_dim, &dxh);
             }
             else {
                 // Contraction
-                let xc = if fr < fh {
+                let xc = if fr < fw {
                     // Outside contraction
-                    (1.0 - self.b) * &centroid + self.b * xr
+                    (1.0 + self.b) * &centroid - self.b * &xw
                 }
                 else {
                     // Inside contraction
-                    (1.0 - self.b) * &centroid + self.b * &xh
+                    (1.0 - self.b) * &centroid + self.b * &xw
                 };
                 let fc = func(xc.to_vec());
 
                 // Contraction accepted
-                let min = if fr < fh { fr } else { fh };
+                let min = if fr < fw { fr } else { fw };
                 if fc < min {
-                    xh = xc;
-                    fh = fc;
-
-                    // Pull update
-                    pairs.pop();
-                    pairs.push((fh, xh));
-
-                    // Sort
-                    pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-                        .unwrap_or(Ordering::Equal));
-
-                    // Update centroid
-                    let new_xh = &pairs.last().unwrap().1;
-                    let dxh = old_xh - new_xh;
-                    centroid.scaled_add(inv_dim, &dxh);
+                    xw = xc;
+                    fw = fc;
                 }
                 else {
                     // Shrinkage
-                    let xl = pairs.first().unwrap().1.clone();
+                    let xb = pairs.first().unwrap().1.clone();
                     for &mut (_, ref mut x) in pairs.iter_mut().skip(1) {
-                        // *x = (1.0 - self.d) * &xl + self.d * x.clone();
                         *x *= self.d;
-                        x.scaled_add(1.0 - self.d, &xl);
+                        x.scaled_add(1.0 - self.d, &xb);
                     }
-
-                    // Pull update
-                    pairs.pop();
-                    pairs.push((fh, xh));
-
-                    // Sort
-                    pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-                        .unwrap_or(Ordering::Equal));
-                    
-                    // Update centroid
-                    let new_xh = &pairs.last().unwrap().1;
-                    let dxh = old_xh - new_xh;
-                    centroid = (1.0 - self.d) * xl + self.d * centroid;
-                    centroid.scaled_add(inv_dim, &dxh);
                 }
             }
 
-            let (fl, fh) = (pairs.first().unwrap().0, pairs.last().unwrap().0);
-            // let end = 2.0 * (fh - fl).abs() / (fh.abs() + fl.abs()) <= self.tol;
-            // let end = (fh - fl).abs() <= self.tol;
+            // Pull update
+            pairs.pop();
+            pairs.push((fw, xw));
 
-            if (fh - fl).abs() <= self.tol {
-                let pair = pairs.first().unwrap();
-                
-                return Ok(Output {
-                    f_min: pair.0,
-                    x_min: pair.1.to_vec(),
-                    iter: iter,
-                });
+            // Sort
+            pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
+                .unwrap_or(Ordering::Equal));
+
+
+            // Termination tests
+            let &(fb, ref xb) = pairs.first().unwrap();
+            let &(fw, ref xw) = pairs.last().unwrap();
+
+            // Domain convergence test
+            let mut sorted = (xw - xb)
+                .into_iter()
+                .map(|xi| xi.abs())
+                .collect::<Vec<f64>>();
+            sorted.sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Ordering::Equal));
+            let test_x = sorted.last().unwrap().clone();
+
+            // Function value convergence test
+            let test_f = (fw - fb).abs();
+
+
+            // Termination test
+            if test_f <= self.tol_f && test_x <= self.tol_x {
+                return Ok(Output { f_min: fb, x_min: xb.to_vec(), iter: iter });
             }
         }
 
