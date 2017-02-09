@@ -3,4 +3,4 @@ mod minimizer;
 #[cfg(test)]
 mod tests;
 
-pub use minimizer::{Minimizer, Output};
+pub use minimizer::{Minimizer, Output, Result};

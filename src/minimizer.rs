@@ -1,10 +1,14 @@
 extern crate ndarray;
 
+use std::result::Result as StdResult;
 use self::ndarray::Array1;
 
 
+pub type Result = StdResult<Output, Output>;
+
+
 /// Output data
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Output {
     pub f_min: f64,
     pub x_min: Vec<f64>,
@@ -59,7 +63,7 @@ impl Default for Minimizer {
 
 impl Minimizer {
     /// Minimize the function `func` with the seed `x0`
-    pub fn minimize<F>(&self, mut func: F, x0: &[f64]) -> Result<Output, ()>
+    pub fn minimize<F>(&self, mut func: F, x0: &[f64]) -> Result
         where F: FnMut(&[f64]) -> f64 {
 
         use std::cmp::Ordering::Equal;
@@ -67,6 +71,7 @@ impl Minimizer {
 
         // Init
         let x0 = Array1::from_vec(x0.to_vec());
+        let max_iter = x0.dim() * self.max_iter;
         let inv_dim = (x0.dim() as f64).recip();
         let mut pairs = Vec::new();
         let pair = (func(&x0.to_vec()), x0.clone());
@@ -94,7 +99,7 @@ impl Minimizer {
         pairs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Equal));
 
 
-        for iter in 0 .. x0.dim() * self.max_iter {
+        for iter in 0 .. max_iter {
             // Centroid
             let centroid = pairs
                 .iter()
@@ -188,6 +193,12 @@ impl Minimizer {
             }
         }
 
-        Err(())
+        use std::f64;
+        
+        Err(Output {
+            f_min: f64::NAN,
+            x_min: Default::default(),
+            iter: max_iter,
+        })
     }
 }
