@@ -29,7 +29,7 @@ fn minimize_sin() {
     println!("x_min = {:?}", result.x_min);
     println!(" iter = {:?}", result.iter);
 
-    assert!((result.f_min - expected).abs() < 1e-16);
+    assert!((result.f_min - expected).abs() < 1e-8);
 }
 
 
