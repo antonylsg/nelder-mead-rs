@@ -4,7 +4,7 @@ use self::ndarray::Array1;
 
 
 /// Output data
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Output {
     pub f_min: f64,
     pub x_min: Vec<f64>,
@@ -59,8 +59,8 @@ impl Default for Minimizer {
 
 impl Minimizer {
     /// Minimize the function `func` with the seed `x0`
-    pub fn minimize<F>(&self, func: F, x0: &[f64]) -> Result<Output, ()>
-        where F: Fn(&[f64]) -> f64 {
+    pub fn minimize<F>(&self, mut func: F, x0: &[f64]) -> Result<Output, ()>
+        where F: FnMut(&[f64]) -> f64 {
 
         use std::cmp::Ordering::Equal;
 
