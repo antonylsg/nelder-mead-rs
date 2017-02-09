@@ -90,11 +90,12 @@ impl Minimizer {
         }
 
 
+        // Sort
+        pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
+            .unwrap_or(Ordering::Equal));
+
+
         for iter in 0 .. x0.dim() * self.max_iter {
-            // Sort
-            pairs.sort_by(|a, b| a.0.partial_cmp(&b.0)
-                .unwrap_or(Ordering::Equal));
-                    
             // Centroid
             let centroid = pairs
                 .iter()
@@ -102,7 +103,6 @@ impl Minimizer {
                 .skip(1)
                 .map(|p| &p.1)
                 .fold(Array1::zeros(x0.dim()), |acc, x| acc + x) * inv_dim;
-
 
             let (mut fw, mut xw) = pairs.last().cloned().unwrap();
 
