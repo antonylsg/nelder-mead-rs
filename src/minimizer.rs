@@ -1,10 +1,47 @@
+use std::result;
+
 extern crate ndarray;
 
-use std::result::Result as StdResult;
 use self::ndarray::Array1;
 
+pub mod error {
+    use std::error;
+    use std::fmt;
 
-pub type Result = StdResult<Output, Output>;
+
+    /// A custom Error for `Minimizer`
+    #[derive(Debug)]
+    pub enum Error {
+        MaxIter(usize),
+    }
+
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                Error::MaxIter(max) => {
+                    write!(f, "Maximal iteration ({}) reached", max)
+                },
+            }
+        }
+    }
+
+    impl error::Error for Error {
+        fn description(&self) -> &str {
+            match *self {
+                Error::MaxIter(_) => "maximal iteration",
+            }
+        }
+
+        fn cause(&self) -> Option<&error::Error> {
+            match *self {
+                Error::MaxIter(_) => None,
+            }
+        }
+    }
+}
+
+
+pub type Result = result::Result<Output, error::Error>;
 
 
 /// Output data
@@ -62,8 +99,8 @@ impl Default for Minimizer {
 }
 
 impl Minimizer {
-    /// Minimize the function `func` with the seed `x0`
-    pub fn minimize<F>(&self, mut func: F, x0: &[f64]) -> Result
+    /// Minimize the function `f` with the seed `x0`
+    pub fn minimize<F>(&self, mut f: F, x0: &[f64]) -> Result
         where F: FnMut(&[f64]) -> f64 {
 
         use std::cmp::Ordering::Equal;
@@ -74,7 +111,7 @@ impl Minimizer {
         let max_iter = x0.dim() * self.max_iter;
         let inv_dim = (x0.dim() as f64).recip();
         let mut pairs = Vec::new();
-        let pair = (func(&x0.to_vec()), x0.clone());
+        let pair = (f(&x0.to_vec()), x0.clone());
         pairs.push(pair);
         
         for (idx, _) in x0.iter().enumerate() {
@@ -90,7 +127,7 @@ impl Minimizer {
                 };
             }
 
-            let pair = (func(&x.to_vec()), x.clone());
+            let pair = (f(&x.to_vec()), x.clone());
             pairs.push(pair);
         }
 
@@ -116,7 +153,7 @@ impl Minimizer {
 
             // Reflection
             let xr = (1.0 + self.a) * &centroid - self.a * &xw;
-            let fr = func(&xr.to_vec());
+            let fr = f(&xr.to_vec());
 
             // Second-worst
             let fs = pairs.iter().rev().skip(1).rev().last().unwrap().0;
@@ -129,7 +166,7 @@ impl Minimizer {
                 // Expansion
                 if fr < fb {
                     let xe = (1.0 - self.c) * &centroid + self.c * xr;
-                    let fe = func(&xe.to_vec());
+                    let fe = f(&xe.to_vec());
 
                     // Expansion accepted
                     if fe < fb {
@@ -148,7 +185,7 @@ impl Minimizer {
                     // Inside contraction
                     (1.0 - self.b) * &centroid + self.b * &xw
                 };
-                let fc = func(&xc.to_vec());
+                let fc = f(&xc.to_vec());
 
                 // Contraction accepted
                 let min = if fr < fw { fr } else { fw };
@@ -192,13 +229,7 @@ impl Minimizer {
                 return Ok(Output { f_min: fb, x_min: xb.to_vec(), iter: iter });
             }
         }
-
-        use std::f64;
         
-        Err(Output {
-            f_min: f64::NAN,
-            x_min: Default::default(),
-            iter: max_iter,
-        })
+        Err(error::Error::MaxIter(max_iter))
     }
 }

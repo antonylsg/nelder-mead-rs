@@ -1,6 +1,6 @@
 [package]
 name = "nelder_mead"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Antony Lesage <lesage.antony@gmail.com>"]
 
 [dependencies]
