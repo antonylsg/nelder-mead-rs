@@ -8,7 +8,6 @@ pub mod error {
     use std::error;
     use std::fmt;
 
-
     /// A custom Error for `Minimizer`
     #[derive(Debug)]
     pub enum Error {
@@ -101,10 +100,9 @@ impl Default for Minimizer {
 impl Minimizer {
     /// Minimize the function `f` with the seed `x0`
     pub fn minimize<F>(&self, mut f: F, x0: &[f64]) -> Result
-        where F: FnMut(&[f64]) -> f64 {
-
+        where F: FnMut(&[f64]) -> f64
+    {
         use std::cmp::Ordering::Equal;
-
 
         // Init
         let x0 = Array1::from_vec(x0.to_vec());
@@ -121,8 +119,7 @@ impl Minimizer {
                 let xi = x.uget_mut(idx);
                 *xi = if *xi == 0.0 {
                     self.step_zero
-                }
-                else {
+                } else {
                     *xi * (1.0 + self.step)
                 };
             }
@@ -138,11 +135,8 @@ impl Minimizer {
 
         for iter in 0 .. max_iter {
             // Centroid
-            let centroid = pairs
-                .iter()
-                .rev()
-                .skip(1)
-                .map(|p| &p.1)
+            let centroid = pairs.iter().rev().skip(1)
+                .map(|&(_, ref x)| x)
                 .fold(Array1::zeros(x0.dim()), |acc, x| acc + x) * inv_dim;
 
             // Best
@@ -156,7 +150,7 @@ impl Minimizer {
             let fr = f(&xr.to_vec());
 
             // Second-worst
-            let fs = pairs.iter().rev().skip(1).rev().last().unwrap().0;
+            let fs = pairs.iter().rev().nth(1).unwrap().0;
 
             // Reflection accepted
             if fr < fs {
@@ -174,14 +168,12 @@ impl Minimizer {
                         fw = fe;
                     }
                 }
-            }
-            else {
+            } else {
                 // Contraction
                 let xc = if fr < fw {
                     // Outside contraction
                     (1.0 + self.b) * &centroid - self.b * &xw
-                }
-                else {
+                } else {
                     // Inside contraction
                     (1.0 - self.b) * &centroid + self.b * &xw
                 };
@@ -192,8 +184,7 @@ impl Minimizer {
                 if fc < min {
                     xw = xc;
                     fw = fc;
-                }
-                else {
+                } else {
                     // Shrinkage
                     for &mut (_, ref mut x) in pairs.iter_mut().skip(1) {
                         *x *= self.d;
