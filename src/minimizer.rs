@@ -99,7 +99,7 @@ impl Default for Minimizer {
 
 impl Minimizer {
     /// Minimize the function `f` with the seed `x0`
-    pub fn minimize<F>(&self, mut f: F, x0: &[f64]) -> Result
+    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result
         where F: FnMut(&[f64]) -> f64
     {
         use std::cmp::Ordering::Equal;
