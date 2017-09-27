@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::result;
 
 extern crate ndarray;
@@ -102,8 +103,6 @@ impl Minimizer {
     pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result
         where F: FnMut(&[f64]) -> f64
     {
-        use std::cmp::Ordering::Equal;
-
         // Init
         let x0 = Array1::from_vec(x0.to_vec());
         let max_iter = x0.dim() * self.max_iter;
@@ -130,7 +129,9 @@ impl Minimizer {
 
 
         // Sort
-        pairs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Equal));
+        pairs.sort_unstable_by(|a, b| {
+            a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
+        });
 
 
         for iter in 0 .. max_iter {
@@ -198,7 +199,9 @@ impl Minimizer {
             pairs.push((fw, xw));
 
             // Sort
-            pairs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Equal));
+            pairs.sort_unstable_by(|a, b| {
+                a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
+            });
 
 
             // Termination tests
@@ -206,9 +209,11 @@ impl Minimizer {
             let &(fw, ref xw) = pairs.last().unwrap();
 
             // Domain convergence test
-            let buf = (xw - xb).to_vec();
-            let mut buf: Vec<_> = buf.into_iter().map(|xi| xi.abs()).collect();
-            buf.sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Equal));
+            let mut buf = (xw - xb).to_vec();
+            buf.iter_mut().fold((), |(), x| *x = x.abs());
+            buf.sort_unstable_by(|a, b| {
+                a.partial_cmp(&b).unwrap_or(Ordering::Equal)
+            });
             let test_x = buf.last().unwrap().clone();
 
             // Function value convergence test
