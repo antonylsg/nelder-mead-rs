@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::error;
 use std::fmt;
+use std::result;
 
 extern crate ndarray;
 
@@ -38,6 +39,9 @@ impl error::Error for Error {
         }
     }
 }
+
+
+type Result = result::Result<Output, Error>;
 
 
 /// Output data.
@@ -98,8 +102,8 @@ impl Default for Minimizer {
 
 impl Minimizer {
     /// Minimizes the function `f` with the seed `x0`.
-    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result<Output, Error>
-        where F: FnMut(&[f64]) -> f64,
+    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result where
+        F: FnMut(&[f64]) -> f64,
     {
         // Init
         let x0 = Array1::from_vec(x0.to_vec());
