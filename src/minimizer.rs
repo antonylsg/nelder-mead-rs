@@ -1,50 +1,46 @@
 use std::cmp::Ordering;
-use std::result;
+use std::error;
+use std::fmt;
 
 extern crate ndarray;
 
 use self::ndarray::Array1;
+    
 
-pub mod error {
-    use std::error;
-    use std::fmt;
+/// A custom Error for `Minimizer`.
+#[derive(Debug)]
+pub enum Error {
+    MaxIter(usize),
+}
 
-    /// A custom Error for `Minimizer`
-    #[derive(Debug)]
-    pub enum Error {
-        MaxIter(usize),
-    }
 
-    impl fmt::Display for Error {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match *self {
-                Error::MaxIter(max) => {
-                    write!(f, "Maximal iteration ({}) reached", max)
-                },
-            }
-        }
-    }
-
-    impl error::Error for Error {
-        fn description(&self) -> &str {
-            match *self {
-                Error::MaxIter(_) => "maximal iteration",
-            }
-        }
-
-        fn cause(&self) -> Option<&error::Error> {
-            match *self {
-                Error::MaxIter(_) => None,
-            }
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::MaxIter(max) => {
+                write!(f, "Maximal iteration ({}) reached", max)
+            },
         }
     }
 }
 
 
-pub type Result = result::Result<Output, error::Error>;
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::MaxIter(_) => "maximal iteration",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::MaxIter(_) => None,
+        }
+    }
+}
 
 
-/// Output data
+/// Output data.
 #[derive(Debug)]
 pub struct Output {
     pub f_min: f64,
@@ -53,34 +49,35 @@ pub struct Output {
 }
 
 
-/// A structure that holds all the minimization parameters
+/// A structure that holds all the minimization parameters.
 #[derive(Debug)]
 pub struct Minimizer {
-    /// Reflection parameter
+    // Reflection parameter
     a: f64,
     
-    /// Contraction parameter
+    // Contraction parameter
     b: f64,
 
-    /// Expansion parameter
+    // Expansion parameter
     c: f64,
 
-    /// Shrinkage parameter
+    // Shrinkage parameter
     d: f64,
 
-    /// Initialization parameters
+    // Initialization parameters
     step: f64,
     step_zero: f64,
 
-    /// Tolerance (function) parameter
+    // Tolerance (function) parameter
     tol_f: f64,
 
-    /// Tolerance (point) parameter
+    // Tolerance (point) parameter
     tol_x: f64,
 
-    /// Iterations parameter
+    // Iterations parameter
     max_iter: usize,
 }
+
 
 impl Default for Minimizer {
     fn default() -> Minimizer {
@@ -98,10 +95,11 @@ impl Default for Minimizer {
     }
 }
 
+
 impl Minimizer {
-    /// Minimize the function `f` with the seed `x0`
-    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result
-        where F: FnMut(&[f64]) -> f64
+    /// Minimizes the function `f` with the seed `x0`.
+    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result<Output, Error>
+        where F: FnMut(&[f64]) -> f64,
     {
         // Init
         let x0 = Array1::from_vec(x0.to_vec());
@@ -210,9 +208,9 @@ impl Minimizer {
 
             // Domain convergence test
             let mut buf = (xw - xb).to_vec();
-            buf.iter_mut().fold((), |(), x| *x = x.abs());
+            buf.iter_mut().for_each(|x| *x = x.abs());
             buf.sort_unstable_by(|a, b| {
-                a.partial_cmp(&b).unwrap_or(Ordering::Equal)
+                a.partial_cmp(b).unwrap_or(Ordering::Equal)
             });
             let test_x = buf.last().unwrap().clone();
 
@@ -222,10 +220,10 @@ impl Minimizer {
 
             // Termination test
             if test_f <= self.tol_f && test_x <= self.tol_x {
-                return Ok(Output { f_min: fb, x_min: xb.to_vec(), iter: iter });
+                return Ok(Output { f_min: fb, x_min: xb.to_vec(), iter });
             }
         }
         
-        Err(error::Error::MaxIter(max_iter))
+        Err(Error::MaxIter(max_iter))
     }
 }
