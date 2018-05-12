@@ -17,7 +17,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
+        match self {
             Error::MaxIter(max) => {
                 write!(f, "Maximal iteration ({}) reached", max)
             },
@@ -28,13 +28,13 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
+        match self {
             Error::MaxIter(_) => "maximal iteration",
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
-        match *self {
+        match self {
             Error::MaxIter(_) => None,
         }
     }
@@ -102,7 +102,8 @@ impl Default for Minimizer {
 
 impl Minimizer {
     /// Minimizes the function `f` with the seed `x0`.
-    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result where
+    pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result
+    where
         F: FnMut(&[f64]) -> f64,
     {
         // Init
