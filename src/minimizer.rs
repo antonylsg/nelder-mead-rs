@@ -6,7 +6,6 @@ use std::result;
 extern crate ndarray;
 
 use self::ndarray::Array1;
-    
 
 /// A custom Error for `Minimizer`.
 #[derive(Debug)]
@@ -14,17 +13,13 @@ pub enum Error {
     MaxIter(usize),
 }
 
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::MaxIter(max) => {
-                write!(f, "Maximal iteration ({}) reached", max)
-            },
+            Error::MaxIter(max) => write!(f, "Maximal iteration ({}) reached", max),
         }
     }
 }
-
 
 impl error::Error for Error {
     fn description(&self) -> &str {
@@ -40,9 +35,7 @@ impl error::Error for Error {
     }
 }
 
-
 type Result = result::Result<Output, Error>;
-
 
 /// Output data.
 #[derive(Debug)]
@@ -52,13 +45,12 @@ pub struct Output {
     pub iter: usize,
 }
 
-
 /// A structure that holds all the minimization parameters.
 #[derive(Debug)]
 pub struct Minimizer {
     // Reflection parameter
     a: f64,
-    
+
     // Contraction parameter
     b: f64,
 
@@ -82,7 +74,6 @@ pub struct Minimizer {
     max_iter: usize,
 }
 
-
 impl Default for Minimizer {
     fn default() -> Minimizer {
         Minimizer {
@@ -99,7 +90,6 @@ impl Default for Minimizer {
     }
 }
 
-
 impl Minimizer {
     /// Minimizes the function `f` with the seed `x0`.
     pub fn minimize<F>(&self, x0: &[f64], mut f: F) -> Result
@@ -113,7 +103,7 @@ impl Minimizer {
         let mut pairs = Vec::new();
         let pair = (f(&x0.to_vec()), x0.clone());
         pairs.push(pair);
-        
+
         for (idx, _) in x0.iter().enumerate() {
             let mut x = x0.clone();
 
@@ -130,18 +120,18 @@ impl Minimizer {
             pairs.push(pair);
         }
 
-
         // Sort
-        pairs.sort_unstable_by(|a, b| {
-            a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
-        });
+        pairs.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal));
 
-
-        for iter in 0 .. max_iter {
+        for iter in 0..max_iter {
             // Centroid
-            let centroid = pairs.iter().rev().skip(1)
+            let centroid = pairs
+                .iter()
+                .rev()
+                .skip(1)
                 .map(|&(_, ref x)| x)
-                .fold(Array1::zeros(x0.dim()), |acc, x| acc + x) * inv_dim;
+                .fold(Array1::zeros(x0.dim()), |acc, x| acc + x)
+                * inv_dim;
 
             // Best
             let (fb, xb) = pairs.first().cloned().unwrap();
@@ -202,10 +192,7 @@ impl Minimizer {
             pairs.push((fw, xw));
 
             // Sort
-            pairs.sort_unstable_by(|a, b| {
-                a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
-            });
-
+            pairs.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal));
 
             // Termination tests
             let &(fb, ref xb) = pairs.first().unwrap();
@@ -214,21 +201,22 @@ impl Minimizer {
             // Domain convergence test
             let mut buf = (xw - xb).to_vec();
             buf.iter_mut().for_each(|x| *x = x.abs());
-            buf.sort_unstable_by(|a, b| {
-                a.partial_cmp(b).unwrap_or(Ordering::Equal)
-            });
+            buf.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
             let test_x = buf.last().unwrap().clone();
 
             // Function value convergence test
             let test_f = (fw - fb).abs();
 
-
             // Termination test
             if test_f <= self.tol_f && test_x <= self.tol_x {
-                return Ok(Output { f_min: fb, x_min: xb.to_vec(), iter });
+                return Ok(Output {
+                    f_min: fb,
+                    x_min: xb.to_vec(),
+                    iter,
+                });
             }
         }
-        
+
         Err(Error::MaxIter(max_iter))
     }
 }
