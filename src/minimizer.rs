@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::error;
 use std::fmt;
 use std::result;
 
@@ -9,33 +8,15 @@ use self::ndarray::Array1;
 
 /// A custom Error for `Minimizer`.
 #[derive(Debug)]
-pub enum Error {
-    MaxIter(usize),
-}
+pub struct MaxIterError(usize);
 
-impl fmt::Display for Error {
+impl fmt::Display for MaxIterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::MaxIter(max) => write!(f, "Maximal iteration ({}) reached", max),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match self {
-            Error::MaxIter(_) => "maximal iteration",
+        write!(f, "Maximal iteration ({}) reached", self.0)
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
-        match self {
-            Error::MaxIter(_) => None,
-        }
-    }
-}
-
-type Result = result::Result<Output, Error>;
+type Result = result::Result<Output, MaxIterError>;
 
 /// Output data.
 #[derive(Debug)]
@@ -217,6 +198,6 @@ impl Minimizer {
             }
         }
 
-        Err(Error::MaxIter(max_iter))
+        Err(MaxIterError(max_iter))
     }
 }
