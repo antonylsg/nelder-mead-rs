@@ -2,9 +2,9 @@ use minimizer::Minimizer;
 
 #[test]
 fn minimize_square_1d() {
-    let minimizer = Minimizer::default();
+    let minimizer = Minimizer::<f64>::default();
     let expected = 0.0;
-    let result = minimizer.minimize(&[1.0_f64], |x| x[0].powi(2)).unwrap();
+    let result = minimizer.minimize(&[1.0], |x| x[0].powi(2)).unwrap();
 
     println!("f_min = {:?}", result.f_min);
     println!("x_min = {:?}", result.x_min);
@@ -15,10 +15,10 @@ fn minimize_square_1d() {
 
 #[test]
 fn minimize_square_2d() {
-    let minimizer = Minimizer::default();
+    let minimizer = Minimizer::<f64>::default();
     let expected = 0.0;
     let result = minimizer
-        .minimize(&[1.0_f64, 1.0], |x| x[0].powi(2) * x[1].powi(2))
+        .minimize(&[1.0, 1.0], |x| x[0].powi(2) * x[1].powi(2))
         .unwrap();
 
     println!("f_min = {:?}", result.f_min);
@@ -30,9 +30,9 @@ fn minimize_square_2d() {
 
 #[test]
 fn minimize_sin() {
-    let minimizer = Minimizer::default();
+    let minimizer = Minimizer::<f64>::default();
     let expected = -1.0;
-    let result = minimizer.minimize(&[0.0_f64], |x| x[0].sin()).unwrap();
+    let result = minimizer.minimize(&[0.0], |x| x[0].sin()).unwrap();
 
     println!("f_min = {:?}", result.f_min);
     println!("x_min = {:?}", result.x_min);
@@ -43,9 +43,9 @@ fn minimize_sin() {
 
 #[test]
 fn minimize_cosh() {
-    let minimizer = Minimizer::default();
+    let minimizer = Minimizer::<f64>::default();
     let expected = 1.0;
-    let result = minimizer.minimize(&[1.0_f64], |x| x[0].cosh()).unwrap();
+    let result = minimizer.minimize(&[1.0], |x| x[0].cosh()).unwrap();
 
     println!("f_min = {:?}", result.f_min);
     println!("x_min = {:?}", result.x_min);
@@ -56,9 +56,9 @@ fn minimize_cosh() {
 
 #[test]
 fn minimize_abs() {
-    let minimizer = Minimizer::default();
+    let minimizer = Minimizer::<f64>::default();
     let expected = 0.0;
-    let result = minimizer.minimize(&[1.0_f64], |x| x[0].abs()).unwrap();
+    let result = minimizer.minimize(&[1.0], |x| x[0].abs()).unwrap();
 
     println!("f_min = {:?}", result.f_min);
     println!("x_min = {:?}", result.x_min);

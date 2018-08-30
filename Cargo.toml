@@ -1,7 +1,8 @@
 [package]
 name = "nelder-mead"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Antony Lesage <lesage.antony@gmail.com>"]
 
 [dependencies]
-ndarray = "*"
+num-traits = "0.2"
+smallvec = "0.6"
