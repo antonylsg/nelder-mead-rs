@@ -168,7 +168,7 @@ where
             let mut buf = &worst.x - &best.x;
             buf.iter_mut().for_each(|x| *x = x.abs());
             buf.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
-            let test_x = buf.last().unwrap().clone();
+            let test_x = *buf.last().unwrap();
 
             // Function value convergence test
             let test_f = (worst.f - best.f).abs();
