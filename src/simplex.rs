@@ -5,9 +5,9 @@ use self::num_traits::NumCast;
 use self::num_traits::One;
 use self::num_traits::Zero;
 
-use minimizer::Minimizer;
-use vector::Array;
-use vector::Vector;
+use crate::minimizer::Minimizer;
+use crate::vector::Array;
+use crate::vector::Vector;
 
 use std::cmp::Ordering;
 use std::ops::Mul;

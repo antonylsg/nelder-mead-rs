@@ -2,8 +2,8 @@ extern crate num_traits;
 
 use self::num_traits::Float;
 
-use simplex::Pair;
-use simplex::Simplex;
+use crate::simplex::Pair;
+use crate::simplex::Simplex;
 
 use std::cmp::Ordering;
 use std::fmt;

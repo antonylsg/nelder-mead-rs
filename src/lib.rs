@@ -4,4 +4,4 @@ mod simplex;
 mod tests;
 mod vector;
 
-pub use minimizer::*;
+pub use crate::minimizer::*;

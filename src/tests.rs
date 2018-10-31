@@ -1,4 +1,4 @@
-use minimizer::Minimizer;
+use crate::minimizer::Minimizer;
 
 #[test]
 fn minimize_square_1d() {
