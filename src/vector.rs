@@ -1,10 +1,7 @@
-extern crate num_traits;
-extern crate smallvec;
-
-use self::num_traits::Float;
-use self::num_traits::Zero;
-pub(crate) use self::smallvec::Array;
-use self::smallvec::SmallVec;
+use num_traits::Float;
+use num_traits::Zero;
+pub(crate) use smallvec::Array;
+use smallvec::SmallVec;
 
 use std::iter;
 use std::iter::FromIterator;
@@ -83,7 +80,7 @@ where
     }
 }
 
-impl<'a, A: Array> Add for &'a Vector<A>
+impl<A: Array> Add for &Vector<A>
 where
     A::Item: Copy + Add<Output = A::Item>,
 {
@@ -94,18 +91,18 @@ where
     }
 }
 
-impl<'a, A: Array> Add<&'a Vector<A>> for Vector<A>
+impl<A: Array> Add<&Vector<A>> for Vector<A>
 where
     A::Item: Copy + Add<Output = A::Item>,
 {
     type Output = Vector<A>;
 
-    fn add(self, rhs: &'a Vector<A>) -> Self::Output {
+    fn add(self, rhs: &Vector<A>) -> Self::Output {
         self.iter().zip(rhs.iter()).map(|(&x, &y)| x + y).collect()
     }
 }
 
-impl<'a, A: Array> Add<Vector<A>> for &'a Vector<A>
+impl<A: Array> Add<Vector<A>> for &Vector<A>
 where
     A::Item: Copy + Add<Output = A::Item>,
 {
@@ -127,7 +124,7 @@ where
     }
 }
 
-impl<'a, A: Array> Mul<A::Item> for &'a Vector<A>
+impl<A: Array> Mul<A::Item> for &Vector<A>
 where
     A::Item: Copy + Mul<Output = A::Item>,
 {
@@ -158,7 +155,7 @@ where
     }
 }
 
-impl<'a, A: Array> Sub for &'a Vector<A>
+impl<A: Array> Sub for &Vector<A>
 where
     A::Item: Copy + Sub<Output = A::Item>,
 {
@@ -169,18 +166,18 @@ where
     }
 }
 
-impl<'a, A: Array> Sub<&'a Vector<A>> for Vector<A>
+impl<A: Array> Sub<&Vector<A>> for Vector<A>
 where
     A::Item: Copy + Sub<Output = A::Item>,
 {
     type Output = Vector<A>;
 
-    fn sub(self, rhs: &'a Vector<A>) -> Self::Output {
+    fn sub(self, rhs: &Vector<A>) -> Self::Output {
         self.iter().zip(rhs.iter()).map(|(&x, &y)| x - y).collect()
     }
 }
 
-impl<'a, A: Array> Sub<Vector<A>> for &'a Vector<A>
+impl<A: Array> Sub<Vector<A>> for &Vector<A>
 where
     A::Item: Copy + Sub<Output = A::Item>,
 {

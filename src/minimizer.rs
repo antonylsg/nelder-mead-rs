@@ -1,6 +1,4 @@
-extern crate num_traits;
-
-use self::num_traits::Float;
+use num_traits::Float;
 
 use crate::simplex::Pair;
 use crate::simplex::Simplex;
@@ -15,7 +13,7 @@ use std::result;
 pub struct MaxIterError(usize);
 
 impl fmt::Display for MaxIterError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Maximal iteration ({}) reached", self.0)
     }
 }

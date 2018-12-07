@@ -1,9 +1,7 @@
-extern crate num_traits;
-
-use self::num_traits::Float;
-use self::num_traits::NumCast;
-use self::num_traits::One;
-use self::num_traits::Zero;
+use num_traits::Float;
+use num_traits::NumCast;
+use num_traits::One;
+use num_traits::Zero;
 
 use crate::minimizer::Minimizer;
 use crate::vector::Array;
