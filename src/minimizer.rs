@@ -5,7 +5,6 @@ use crate::simplex::Simplex;
 
 use std::cmp::Ordering;
 use std::fmt;
-use std::ops::MulAssign;
 use std::result;
 
 /// A custom Error for `Minimizer`.
@@ -81,7 +80,7 @@ where
     pub fn minimize<F>(&self, x0: &[T], mut f: F) -> Result<T>
     where
         F: FnMut(&[T]) -> T,
-        T: Clone + MulAssign,
+        T: Clone,
     {
         // Init
         let max_iter = x0.len() * self.max_iter;

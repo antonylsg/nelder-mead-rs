@@ -9,7 +9,6 @@ use crate::vector::Vector;
 
 use std::cmp::Ordering;
 use std::ops::Mul;
-use std::ops::MulAssign;
 
 #[derive(Clone)]
 // pub(crate) struct Pair<A: Array>(pub(crate) A::Item, pub(crate) Vector<A>);
@@ -111,11 +110,11 @@ impl<A: Array> Simplex<A> {
     pub(crate) fn shrink<F>(&mut self, mut f: F, minimizer: &Minimizer<A::Item>)
     where
         F: FnMut(&[A::Item]) -> A::Item,
-        A::Item: Float + MulAssign,
+        A::Item: Float,
     {
         let best = self.best().unwrap().x.clone();
         for pair in self.pairs.iter_mut().skip(1) {
-            pair.x *= minimizer.d;
+            pair.x = pair.x.clone() * minimizer.d;
             pair.x.scaled_add(A::Item::one() - minimizer.d, &best);
             pair.f = f(&pair.x);
         }
