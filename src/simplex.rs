@@ -11,7 +11,6 @@ use std::cmp::Ordering;
 use std::ops::Mul;
 
 #[derive(Clone)]
-// pub(crate) struct Pair<A: Array>(pub(crate) A::Item, pub(crate) Vector<A>);
 pub(crate) struct Pair<A: Array> {
     pub(crate) f: A::Item,
     pub(crate) x: Vector<A>,

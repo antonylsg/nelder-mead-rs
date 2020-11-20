@@ -4,20 +4,18 @@ use crate::simplex::Pair;
 use crate::simplex::Simplex;
 
 use std::cmp::Ordering;
-use std::fmt;
-use std::result;
 
-/// A custom Error for `Minimizer`.
+/// Maximal iteration reached.
 #[derive(Debug)]
-pub struct MaxIterError(usize);
+pub struct MaxIterError(pub usize);
 
-impl fmt::Display for MaxIterError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for MaxIterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Maximal iteration ({}) reached", self.0)
     }
 }
 
-type Result<T> = result::Result<Output<T>, MaxIterError>;
+impl std::error::Error for MaxIterError {}
 
 /// Output data.
 #[derive(Debug)]
@@ -26,6 +24,8 @@ pub struct Output<T> {
     pub x_min: Vec<T>,
     pub iter: usize,
 }
+
+pub type Result<T> = std::result::Result<Output<T>, MaxIterError>;
 
 /// A structure that holds all the minimization parameters.
 #[derive(Debug)]
