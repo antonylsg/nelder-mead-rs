@@ -29,9 +29,9 @@ pub(crate) struct Simplex<A: Array> {
 }
 
 impl<A: Array> Simplex<A> {
-    pub(crate) fn new<F>(slice: &[A::Item], mut f: F, minimizer: &Minimizer<A::Item>) -> Simplex<A>
+    pub(crate) fn new<F>(slice: &[A::Item], mut f: F, minimizer: &Minimizer<A>) -> Simplex<A>
     where
-        F: FnMut(&[A::Item]) -> A::Item,
+        F: FnMut(&A) -> A::Item,
         A::Item: Float,
     {
         let dim = <A::Item as NumCast>::from(slice.len()).unwrap();
@@ -106,9 +106,9 @@ impl<A: Array> Simplex<A> {
         Some(second_to_last)
     }
 
-    pub(crate) fn shrink<F>(&mut self, mut f: F, minimizer: &Minimizer<A::Item>)
+    pub(crate) fn shrink<F>(&mut self, mut f: F, minimizer: &Minimizer<A>)
     where
-        F: FnMut(&[A::Item]) -> A::Item,
+        F: FnMut(&A) -> A::Item,
         A::Item: Float,
     {
         let best = self.best().unwrap().x.clone();

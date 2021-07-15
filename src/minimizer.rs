@@ -1,7 +1,9 @@
 use num_traits::Float;
+use num_traits::NumCast;
 
 use crate::simplex::Pair;
 use crate::simplex::Simplex;
+use crate::vector::Array;
 
 use std::cmp::Ordering;
 
@@ -29,62 +31,65 @@ pub type Result<T> = std::result::Result<Output<T>, MaxIterError>;
 
 /// A structure that holds all the minimization parameters.
 #[derive(Debug)]
-pub struct Minimizer<T> {
+pub struct Minimizer<A: Array> {
     // Reflection parameter
-    a: T,
+    a: A::Item,
 
     // Contraction parameter
-    b: T,
+    b: A::Item,
 
     // Expansion parameter
-    c: T,
+    c: A::Item,
 
     // Shrinkage parameter
-    pub(crate) d: T,
+    pub(crate) d: A::Item,
 
     // Initialization parameters
-    pub(crate) step: T,
-    pub(crate) step_zero: T,
+    pub(crate) step: A::Item,
+    pub(crate) step_zero: A::Item,
 
     // Tolerance (function) parameter
-    tol_f: T,
+    tol_f: A::Item,
 
     // Tolerance (point) parameter
-    tol_x: T,
+    tol_x: A::Item,
 
     // Iterations parameter
     max_iter: usize,
 }
 
-impl<T: Float> Default for Minimizer<T> {
-    fn default() -> Minimizer<T> {
+impl<A: Array> Default for Minimizer<A>
+where
+    A::Item: Float,
+{
+    fn default() -> Minimizer<A> {
         Minimizer {
-            a: T::from(1.0).unwrap(),
-            b: T::from(0.5).unwrap(),
-            c: T::from(2.0).unwrap(),
-            d: T::from(0.5).unwrap(),
-            step: T::from(0.01).unwrap(),
-            step_zero: T::from(0.00025).unwrap(),
-            tol_f: T::from(1e-4).unwrap(),
-            tol_x: T::from(1e-4).unwrap(),
+            a: <A::Item as NumCast>::from(1.0).unwrap(),
+            b: <A::Item as NumCast>::from(0.5).unwrap(),
+            c: <A::Item as NumCast>::from(2.0).unwrap(),
+            d: <A::Item as NumCast>::from(0.5).unwrap(),
+            step: <A::Item as NumCast>::from(0.01).unwrap(),
+            step_zero: <A::Item as NumCast>::from(0.00025).unwrap(),
+            tol_f: <A::Item as NumCast>::from(1e-4).unwrap(),
+            tol_x: <A::Item as NumCast>::from(1e-4).unwrap(),
             max_iter: 200,
         }
     }
 }
 
-impl<T> Minimizer<T>
+impl<A: Array> Minimizer<A>
 where
-    T: Float,
+    A::Item: Float,
 {
     /// Minimizes the function `f` with the seed `x0`.
-    pub fn minimize<F>(&self, x0: &[T], mut f: F) -> Result<T>
+    pub fn minimize<F>(&self, x0: &A, mut f: F) -> Result<A::Item>
     where
-        F: FnMut(&[T]) -> T,
-        T: Clone,
+        F: FnMut(&A) -> A::Item,
+        A::Item: Clone,
     {
         // Init
-        let max_iter = x0.len() * self.max_iter;
-        let mut simplex = Simplex::<[T; 8]>::new(x0, &mut f, self);
+        let max_iter = x0.as_ref().len() * self.max_iter;
+        let mut simplex = Simplex::<A>::new(x0.as_ref(), &mut f, self);
 
         // Sort
         simplex.sort_unstable();
@@ -164,8 +169,9 @@ where
             // Domain convergence test
             let mut buf = &worst.x - &best.x;
             buf.iter_mut().for_each(|x| *x = x.abs());
-            buf.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
-            let test_x = *buf.last().unwrap();
+            buf.as_mut()
+                .sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+            let test_x = *buf.as_ref().last().unwrap();
 
             // Function value convergence test
             let test_f = (worst.f - best.f).abs();
@@ -174,7 +180,7 @@ where
             if test_f <= self.tol_f && test_x <= self.tol_x {
                 return Ok(Output {
                     f_min: best.f,
-                    x_min: best.x.to_vec(),
+                    x_min: best.x.as_ref().to_vec(),
                     iter,
                 });
             }
