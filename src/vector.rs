@@ -90,7 +90,7 @@ impl<T, U> Array for T where
 {
 }
 
-pub(crate) struct Vector<A: Array>(A);
+pub(crate) struct Vector<A: Array>(pub(crate) A);
 
 impl<A: Array> Vector<A> {
     pub(crate) fn from_slice(slice: &[A::Item]) -> Vector<A>

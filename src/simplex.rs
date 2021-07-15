@@ -36,7 +36,7 @@ impl<A: Array> Simplex<A> {
     {
         let dim = <A::Item as NumCast>::from(slice.len()).unwrap();
         let inv_dim = dim.recip();
-        let x0 = Vector::<A>::from_slice(slice);
+        let x0 = Vector::from_slice(slice);
 
         let mut pairs = Vec::new();
         let pair = Pair::new(f(&x0), x0.clone());

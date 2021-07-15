@@ -21,13 +21,13 @@ impl std::error::Error for MaxIterError {}
 
 /// Output data.
 #[derive(Debug)]
-pub struct Output<T> {
-    pub f_min: T,
-    pub x_min: Vec<T>,
+pub struct Output<A: Array> {
+    pub f_min: A::Item,
+    pub x_min: A,
     pub iter: usize,
 }
 
-pub type Result<T> = std::result::Result<Output<T>, MaxIterError>;
+pub type Result<A> = std::result::Result<Output<A>, MaxIterError>;
 
 /// A structure that holds all the minimization parameters.
 #[derive(Debug)]
@@ -82,14 +82,14 @@ where
     A::Item: Float,
 {
     /// Minimizes the function `f` with the seed `x0`.
-    pub fn minimize<F>(&self, x0: &A, mut f: F) -> Result<A::Item>
+    pub fn minimize<F>(&self, x0: &[A::Item], mut f: F) -> Result<A>
     where
         F: FnMut(&A) -> A::Item,
         A::Item: Clone,
     {
         // Init
-        let max_iter = x0.as_ref().len() * self.max_iter;
-        let mut simplex = Simplex::<A>::new(x0.as_ref(), &mut f, self);
+        let max_iter = x0.len() * self.max_iter;
+        let mut simplex = Simplex::new(x0, &mut f, self);
 
         // Sort
         simplex.sort_unstable();
@@ -180,7 +180,7 @@ where
             if test_f <= self.tol_f && test_x <= self.tol_x {
                 return Ok(Output {
                     f_min: best.f,
-                    x_min: best.x.as_ref().to_vec(),
+                    x_min: best.x.0.clone(),
                     iter,
                 });
             }
