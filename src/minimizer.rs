@@ -1,9 +1,9 @@
+use array::Array;
 use num_traits::Float;
 use num_traits::NumCast;
 
 use crate::simplex::Pair;
 use crate::simplex::Simplex;
-use crate::vector::Array;
 
 use std::cmp::Ordering;
 

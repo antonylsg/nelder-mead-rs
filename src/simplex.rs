@@ -1,10 +1,10 @@
+use array::Array;
 use num_traits::Float;
 use num_traits::NumCast;
 use num_traits::One;
 use num_traits::Zero;
 
 use crate::minimizer::Minimizer;
-use crate::vector::Array;
 use crate::vector::Vector;
 
 use std::cmp::Ordering;

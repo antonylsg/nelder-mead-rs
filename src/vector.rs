@@ -1,11 +1,9 @@
+use array::Array;
 use num_traits::Float;
 use num_traits::Zero;
 
-use std::convert::AsMut;
-use std::convert::AsRef;
 use std::iter;
 use std::iter::FromIterator;
-use std::mem;
 use std::ops::Add;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -14,81 +12,6 @@ use std::ops::IndexMut;
 use std::ops::Mul;
 use std::ops::MulAssign;
 use std::ops::Sub;
-
-#[derive(Debug, Clone, Copy)]
-pub struct NotEnoughItems;
-
-pub trait TryFromIterator<A> {
-    type Error: std::fmt::Debug;
-
-    fn try_from_iter<I>(iter: I) -> Result<Self, Self::Error>
-    where
-        I: IntoIterator<Item = A>,
-        Self: Sized;
-}
-
-fn try_from_iter<I, T, const N: usize>(iter: I) -> Result<[T; N], NotEnoughItems>
-where
-    I: IntoIterator<Item = T>,
-{
-    let mut iter = iter.into_iter();
-    let mut buffer = mem::MaybeUninit::<[T; N]>::uninit();
-    let ptr: *mut T = unsafe { mem::transmute(&mut buffer) };
-
-    for i in 0..N {
-        if let Some(next) = iter.next() {
-            unsafe { ptr.add(i).write(next) };
-        } else {
-            return Err(NotEnoughItems);
-        }
-    }
-
-    Ok(unsafe { buffer.assume_init() })
-}
-
-impl<T, const N: usize> TryFromIterator<T> for [T; N] {
-    type Error = NotEnoughItems;
-
-    fn try_from_iter<I>(iter: I) -> Result<Self, Self::Error>
-    where
-        I: IntoIterator<Item = T>,
-    {
-        try_from_iter(iter)
-    }
-}
-
-impl<T> TryFromIterator<T> for Vec<T> {
-    type Error = std::convert::Infallible;
-
-    fn try_from_iter<I>(iter: I) -> Result<Self, Self::Error>
-    where
-        I: IntoIterator<Item = T>,
-    {
-        Ok(iter.into_iter().collect())
-    }
-}
-
-pub trait Array:
-    TryFromIterator<Self::Item>
-    + IntoIterator
-    + AsRef<[Self::Item]>
-    + AsMut<[Self::Item]>
-    + Index<usize, Output = Self::Item>
-    + IndexMut<usize>
-    + Clone
-{
-}
-
-impl<T, U> Array for T where
-    T: TryFromIterator<U>
-        + IntoIterator<Item = U>
-        + AsRef<[Self::Item]>
-        + AsMut<[Self::Item]>
-        + Index<usize, Output = U>
-        + IndexMut<usize>
-        + Clone
-{
-}
 
 #[derive(Debug, Clone)]
 pub(crate) struct Vector<A: Array>(pub(crate) A);

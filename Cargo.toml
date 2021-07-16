@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 num-traits = "0.2"
+
+[dependencies.array]
+git = "https://github.com/antonylsg/array-rs"
