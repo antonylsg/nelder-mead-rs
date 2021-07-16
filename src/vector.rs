@@ -90,6 +90,7 @@ impl<T, U> Array for T where
 {
 }
 
+#[derive(Debug, Clone)]
 pub(crate) struct Vector<A: Array>(pub(crate) A);
 
 impl<A: Array> Vector<A> {
@@ -122,15 +123,6 @@ impl<A: Array> Vector<A> {
 
     pub(crate) fn iter_mut(&mut self) -> std::slice::IterMut<'_, A::Item> {
         self.0.as_mut().iter_mut()
-    }
-}
-
-impl<A: Array> Clone for Vector<A>
-where
-    A::Item: Clone,
-{
-    fn clone(&self) -> Vector<A> {
-        Vector(self.0.clone())
     }
 }
 
