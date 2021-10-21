@@ -2,7 +2,7 @@
 name = "nelder-mead"
 version = "0.2.0"
 authors = ["Antony Lesage <lesage.antony@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 num-traits = "0.2"
