@@ -73,7 +73,7 @@ impl<A: Array> Simplex<A> {
             .iter()
             .rev()
             .skip(1)
-            .map(|&Pair { ref x, .. }| x)
+            .map(|Pair { x, .. }| x)
             .fold(Vector::zeros(self.dim), |acc, x| acc + x)
             .mul(self.inv_dim)
     }
